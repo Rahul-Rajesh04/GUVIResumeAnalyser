@@ -1,0 +1,200 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* AI Career Copilot Design System - Dark Theme Professional */
+
+@layer base {
+  :root {
+    /* Base Dark Theme Colors */
+    --background: 222 14% 8%;
+    --foreground: 0 0% 98%;
+    
+    --card: 222 14% 10%;
+    --card-foreground: 0 0% 98%;
+    
+    --popover: 222 14% 12%;
+    --popover-foreground: 0 0% 98%;
+    
+    /* Electric Blue Accent System */
+    --primary: 217 91% 60%;
+    --primary-foreground: 222 14% 8%;
+    --primary-glow: 217 91% 70%;
+    --primary-dark: 217 91% 45%;
+    
+    /* Professional Secondary Colors */
+    --secondary: 222 14% 14%;
+    --secondary-foreground: 0 0% 90%;
+    
+    --muted: 222 14% 16%;
+    --muted-foreground: 0 0% 65%;
+    
+    --accent: 270 95% 65%;
+    --accent-foreground: 222 14% 8%;
+    
+    /* Status Colors */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 222 14% 8%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    
+    /* UI Elements */
+    --border: 222 14% 18%;
+    --input: 222 14% 16%;
+    --ring: 217 91% 60%;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    --gradient-accent: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--primary)));
+    --gradient-card: linear-gradient(135deg, hsl(var(--card)), hsl(222 14% 12%));
+    
+    /* Shadows & Effects */
+    --shadow-glow: 0 0 40px hsl(var(--primary) / 0.15);
+    --shadow-card: 0 8px 32px hsl(222 14% 4% / 0.4);
+    --shadow-button: 0 4px 16px hsl(var(--primary) / 0.3);
+    
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-spring: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  html {
+    @apply antialiased;
+  }
+  
+  body {
+    @apply bg-background text-foreground antialiased;
+    background-image: 
+      radial-gradient(circle at 25% 25%, hsl(var(--primary) / 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 75% 75%, hsl(var(--accent) / 0.05) 0%, transparent 50%);
+  }
+  
+  /* Scrollbar Styling */
+  ::-webkit-scrollbar {
+    @apply w-2;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-muted/30;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/50;
+  }
+}
+
+@layer components {
+  /* Hero Button Variants */
+  .btn-hero {
+    @apply bg-gradient-to-r from-primary to-primary-glow text-primary-foreground font-semibold;
+    @apply hover:shadow-button hover:scale-105 active:scale-95;
+    @apply transition-all duration-300 ease-out;
+  }
+  
+  .btn-accent {
+    @apply bg-gradient-to-r from-accent to-primary text-accent-foreground font-semibold;
+    @apply hover:shadow-button hover:scale-105 active:scale-95;
+    @apply transition-all duration-300 ease-out;
+  }
+  
+  .btn-ghost {
+    @apply bg-card/50 border border-border hover:bg-card hover:border-primary/50;
+    @apply transition-all duration-300 ease-out;
+  }
+  
+  /* Card Variants */
+  .card-elevated {
+    @apply bg-gradient-to-br from-card to-card/80 border border-border/50;
+    @apply shadow-card hover:shadow-glow hover:border-primary/30;
+    @apply transition-all duration-300 ease-out;
+  }
+  
+  .card-interactive {
+    @apply card-elevated cursor-pointer hover:scale-[1.02] active:scale-[0.98];
+  }
+  
+  /* Text Gradients */
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent;
+  }
+  
+  .text-glow {
+    text-shadow: 0 0 20px hsl(var(--primary) / 0.5);
+  }
+  
+  /* Progress Bars */
+  .progress-glow {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.4);
+  }
+  
+  /* Animation Classes */
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.6s ease-out;
+  }
+  
+  .animate-bounce-in {
+    animation: bounceIn 0.8s ease-out;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
