@@ -50,14 +50,18 @@ export interface UserProfile {
   lastModified: string;
 }
 
+// ... (imports and UserProfile interface)
+
 export interface AppState {
   currentPage: string;
-  currentUser: UserProfile | null;
+  currentUser: UserProfile | null; // <<< THIS LINE IS ALREADY HERE AND CORRECT
   profiles: UserProfile[];
   wizardStep: number;
   completedSteps: number[];
   activeExperienceTab: 'projects' | 'work' | 'certifications' | null;
 }
+
+// ... (the rest of your file)
 
 interface AppContextType {
   state: AppState;

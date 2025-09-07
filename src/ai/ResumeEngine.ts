@@ -1,12 +1,14 @@
 // src/ai/ResumeEngine.ts
 import { analyzeResumeWithGemini } from './gemini.server';
+import { UserProfile } from '../contexts/AppContext'; // Import UserProfile
 
-// Define a type for the analysis structure for better type safety
+// Define a new, more detailed type for the analysis
 export interface ResumeAnalysis {
-  score: number;
+  tailoringScore: number;
+  alignmentAnalysis: string;
   strengths: string[];
-  weaknesses: string[];
-  suggestions: Array<{
+  improvementAreas: string[];
+  actionableSuggestions: Array<{
     category: string;
     priority: 'high' | 'medium' | 'low';
     items: string[];
@@ -15,24 +17,30 @@ export interface ResumeAnalysis {
   message?: string;
 }
 
-export async function analyzeResume(resumeText: string): Promise<ResumeAnalysis> {
+// The function now accepts the user's profile and job details
+export async function analyzeResume(
+  userProfile: UserProfile,
+  resumeText: string,
+  goalJob: string,
+  goalJobDescription: string
+): Promise<ResumeAnalysis> {
   if (!resumeText || resumeText.trim().length < 50) {
     return {
-      score: 0,
+      // Return a default error structure that matches the new type
+      tailoringScore: 0,
+      alignmentAnalysis: "",
       strengths: [],
-      weaknesses: [],
-      suggestions: [],
+      improvementAreas: [],
+      actionableSuggestions: [],
       error: "Resume text is too short.",
       message: "Please provide a resume with sufficient content to analyze."
     };
   }
 
-  // Call the Gemini function from your server file
-  const result = await analyzeResumeWithGemini(resumeText);
+  // Pass all the necessary data to the Gemini function
+  const result = await analyzeResumeWithGemini(userProfile, resumeText, goalJob, goalJobDescription);
   
-  // A quick check to make sure the AI response is in the right format
-  if (result.error || !result.score) {
-     // If the AI gives an error, we pass it along
+  if (result.error || !result.tailoringScore) {
      return result;
   }
   

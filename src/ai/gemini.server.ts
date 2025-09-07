@@ -69,35 +69,65 @@ export async function generateRoadmapWithGemini(user: UserProfile): Promise<any>
     return run(prompt);
 }
 
-export async function analyzeResumeWithGemini(resumeText: string): Promise<any> {
-    const prompt = `
-        Your first task is to determine if the following text is a professional resume. A resume typically includes sections like "Experience", "Education", "Skills", and contact information.
+// src/ai/gemini.server.ts
+// ... (keep the rest of the file the same)
 
-        If the text does NOT appear to be a resume, return ONLY the following JSON object:
+// Note: The function signature now accepts the user's profile and goal job info.
+export async function analyzeResumeWithGemini(
+  userProfile: UserProfile,
+  resumeText: string,
+  goalJob: string,
+  goalJobDescription: string
+): Promise<any> {
+    const prompt = `
+        You are an expert career coach reviewing a client's resume. Your primary goal is to determine how well their resume is tailored for a specific job they are targeting and align it with their personal career aspirations.
+
+        **Client's Profile Information:**
+        - Long-Term Goal: ${userProfile.goals.longTermGoal}
+        - Key Skills: ${userProfile.skills.map(s => s.name).join(', ')}
+        - Interests: ${userProfile.goals.interests.join(', ')}
+
+        **Target Job Information:**
+        - Job Title: "${goalJob}"
+        - Job Description: "${goalJobDescription}"
+
+        **Client's Resume Text:**
+        "${resumeText}"
+
+        **Your Task:**
+        1.  First, determine if the provided text is a professional resume. If not, return an error.
+        2.  Analyze the resume and compare it against the target job description and the client's profile.
+        3.  Provide a "Tailoring Score" from 0-100, indicating how well the resume is customized for the target job.
+        4.  Offer clear, actionable suggestions for improvement.
+
+        **JSON Output Structure:**
+        If the text is not a resume, return:
         {
           "error": "Not a Resume",
-          "message": "The uploaded text does not appear to be a resume. Please upload a proper resume for analysis."
+          "message": "The uploaded text does not appear to be a resume. Please upload a proper document for analysis."
         }
 
-        If the text IS a resume, please analyze it from the perspective of a helpful and constructive career coach.
-
-        Resume Text: "${resumeText}"
-
-        If it is a resume, generate a JSON object with the following structure. Calculate the score based on the rubric provided.
+        If it IS a resume, return:
         {
-          "score": 0, // Calculate a score from 0-100 based on the resume's overall quality. A score below 60 indicates significant issues. A score between 70-85 is good and should be earned. A score of 90+ is exceptional and rare, reserved for resumes with clear, quantifiable achievements, strong action verbs, and perfect formatting. The score should directly reflect the strengths and weaknesses you identify.
-          "strengths": ["Identify key strengths such as clear impact statements, good formatting, and relevant skills."],
-          "weaknesses": ["Point out areas for improvement in a constructive manner. Focus on things like weak action verbs or lack of metrics."],
-          "suggestions": [
+          "tailoringScore": 0, // A score from 0-100 based on alignment with the job description. 85+ is excellent.
+          "alignmentAnalysis": "Provide a 2-3 sentence analysis of how well the resume aligns with the target job and the user's long-term goals.",
+          "strengths": ["List specific elements from the resume that are strong matches for the job description."],
+          "improvementAreas": ["Identify key gaps or weaknesses in the resume when compared to the job requirements."],
+          "actionableSuggestions": [
             {
-              "category": "Impact and Metrics",
+              "category": "Keyword Optimization",
               "priority": "high",
-              "items": ["Provide actionable suggestions to help the user quantify their achievements and show more impact."]
+              "items": ["Suggest specific keywords from the job description that should be included in the resume."]
             },
             {
-              "category": "Clarity and Readability",
+              "category": "Experience Framing",
+              "priority": "high",
+              "items": ["Advise on how to rephrase bullet points from their experience to better match the responsibilities listed in the job description."]
+            },
+            {
+              "category": "Skills Gap",
               "priority": "medium",
-              "items": ["Suggest improvements for clarity, conciseness, and professional formatting."]
+              "items": ["Based on the user's profile skills and the job's needs, suggest which skills to highlight, add, or elaborate on."]
             }
           ]
         }
@@ -105,6 +135,8 @@ export async function analyzeResumeWithGemini(resumeText: string): Promise<any> 
 
     return run(prompt);
 }
+
+// ... (keep the other functions like `run` the same)
 
 export async function getInterviewResponseWithGemini(question: string, previousMessages: any[]): Promise<any> {
     const prompt = `
