@@ -177,7 +177,7 @@ export function DashboardPage() {
                 <p className="text-muted-foreground">Work Experience</p>
               </Card>
             </HoverCardTrigger>
-             <HoverCardContent className="w-80">
+              <HoverCardContent className="w-80">
               <h4 className="font-semibold mb-2">Work Experience</h4>
               {currentUser.experience.workExperience.length > 0 ? (
                 <ul className="list-disc list-inside space-y-1">
@@ -197,7 +197,7 @@ export function DashboardPage() {
                 <p className="text-muted-foreground">Certifications</p>
               </Card>
             </HoverCardTrigger>
-             <HoverCardContent className="w-80">
+              <HoverCardContent className="w-80">
               <h4 className="font-semibold mb-2">Certifications</h4>
               {currentUser.experience.certifications.length > 0 ? (
                 <ul className="list-disc list-inside space-y-1">
@@ -331,11 +331,12 @@ export function DashboardPage() {
               Use our advanced AI tools to accelerate your career development
             </p>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          
+          {/* MODIFIED SECTION: Using grid for equal width */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Button
               onClick={() => navigateToPage('roadmap')}
-              className="btn-hero h-20 flex-col gap-2 text-base"
+              className="btn-hero h-20 flex-col gap-2 text-base w-full"
               disabled={completeness < 50}
             >
               <Brain className="w-6 h-6" />
@@ -344,20 +345,11 @@ export function DashboardPage() {
 
             <Button
               onClick={() => navigateToPage('resume-analyzer')}
-              className="btn-accent h-20 flex-col gap-2 text-base"
+              className="btn-accent h-20 flex-col gap-2 text-base w-full"
               disabled={completeness < 30}
             >
               <FileText className="w-6 h-6" />
               <span>Analyze Resume</span>
-            </Button>
-
-            <Button
-              onClick={() => navigateToPage('interview')}
-              className="btn-hero h-20 flex-col gap-2 text-base"
-              disabled={completeness < 40}
-            >
-              <MessageCircle className="w-6 h-6" />
-              <span>Start Mock Interview</span>
             </Button>
           </div>
 
