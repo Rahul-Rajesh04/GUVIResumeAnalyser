@@ -1,35 +1,50 @@
 // src/ai/RoadmapEngine.ts
 import { UserProfile } from '../contexts/AppContext';
-import { generateRoadmapWithGemini } from './gemini.server';
 
+// You can define a more specific type for the Roadmap if you like
 export interface Roadmap {
   title: string;
   focus: string;
-  weeks?: Array<{
-    week: number;
-    title: string;
-    focus: string;
-    tasks: Array<{
-      id: string;
-      title: string;
-      description: string;
-      completed: boolean;
-    }>;
-  }>;
-  error?: string;
+  weeks: any[]; // Consider defining a stricter type for weeks and tasks
+  error?: boolean;
   message?: string;
 }
 
-export async function generateRoadmap(user: UserProfile): Promise<Roadmap> {
-  const longTermGoal = user.goals.longTermGoal;
-  if (!longTermGoal) {
+export async function generateRoadmap(userProfile: UserProfile): Promise<Roadmap> {
+  const API_ENDPOINT = 'http://localhost:3001/api/generate-roadmap';
+
+  try {
+    const response = await fetch(API_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userProfile }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Server responded with an error:', errorData);
+      return {
+        error: true,
+        message: errorData.message || 'Failed to generate roadmap.',
+        title: '',
+        focus: '',
+        weeks: [],
+      };
+    }
+
+    const roadmapResult: Roadmap = await response.json();
+    return roadmapResult;
+
+  } catch (error) {
+    console.error('Failed to fetch from backend:', error);
     return {
-      title: "Goal Not Set",
-      focus: "",
-      error: "Long-term goal not set. Please define your goal in the profile wizard."
+      error: true,
+      message: 'Could not connect to the server. Please ensure it is running.',
+      title: '',
+      focus: '',
+      weeks: [],
     };
   }
-
-  // This now calls your new Gemini function
-  return await generateRoadmapWithGemini(user);
 }
