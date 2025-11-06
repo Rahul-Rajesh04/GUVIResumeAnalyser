@@ -42,7 +42,7 @@ class OpenRouterProvider {
             Authorization: `Bearer ${this.apiKey}`,
             "Content-Type": "application/json",
             // attribution headers OpenRouter likes
-            Referer: process.env.WEB_ORIGIN || "http://localhost:5173",
+            "HTTP-Referer": process.env.WEB_ORIGIN || "http://localhost:5173",
             "X-Title": "GUVI Resume Analyzer",
           },
           body: JSON.stringify(body),
@@ -52,6 +52,12 @@ class OpenRouterProvider {
         const data = await resp.json().catch(() => ({}));
 
         if (!resp.ok) {
+          
+          // ---!!! THIS IS THE IMPORTANT DEBUG LINE !!!---
+          // This will print the *exact* error from OpenRouter
+          console.error(`[OpenRouter] Not OK response for model ${model}. Status: ${resp.status}, Body:`, JSON.stringify(data));
+          // ---!!! END DEBUG LOG !!!---
+
           // If 429, wait and retry with backoff
           if (resp.status === 429) {
             const wait = Math.pow(2, attempt) * 1000 + Math.floor(Math.random() * 500);
