@@ -66,7 +66,35 @@
       "type": "array",
       "items": { "type": "string" },
       "description": "A general list of all key skills extracted from the resume."
+    },
+    "improvementAreas": {
+      "type": "array",
+      "description": "An array of 3-5 specific, actionable suggestions for the candidate to improve their resume, based on gaps found when comparing it to the job description.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "area": {
+            "type": "string",
+            "description": "A short title for the area of improvement (e.g., 'Missing Quantifiable Metrics', 'Lacks Cloud Experience')."
+          },
+          "suggestion": {
+            "type": "string",
+            "description": "A 1-2 sentence constructive suggestion for the candidate. Explain the gap and what to add. Example: 'The resume mentions managing projects, but lacks specific metrics. Add quantifiable achievements (e.g., 'completed 5 projects on time') to show impact.'"
+          },
+          "importance": {
+            "type": "string",
+            "description": "The priority of this suggestion.",
+            "enum": ["High", "Medium", "Low"]
+          }
+        },
+        "required": ["area", "suggestion", "importance"]
+      }
     }
   },
-  "additionalProperties": true
+  "additionalProperties": true,
+  "required": [
+    "skills",
+    "strongMatches",
+    "improvementAreas"
+  ]
 }

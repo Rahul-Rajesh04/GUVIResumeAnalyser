@@ -20,6 +20,16 @@ const getPriorityColor = (priority: 'high' | 'medium' | 'low') => {
   }
 };
 
+// This helper function is required for the fix
+const getImportanceColor = (importance: 'High' | 'Medium' | 'Low') => {
+  switch (importance) {
+    case 'High': return 'text-red-500';
+    case 'Medium': return 'text-yellow-500';
+    case 'Low': return 'text-blue-500';
+    default: return 'text-gray-500';
+  }
+};
+
 export function AnalysisResultDisplay({ isAnalyzing, analysisResult, clearFile }: Props) {
   if (isAnalyzing) {
     return (
@@ -65,16 +75,27 @@ export function AnalysisResultDisplay({ isAnalyzing, analysisResult, clearFile }
                     </ul>
                 </CardContent>
             </Card>
+
+            {/* --- THIS IS THE CORRECTED CARD --- */}
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center text-red-600"><ThumbsDown className="mr-2"/> Improvement Areas</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <ul className="list-disc pl-5 space-y-1">
-                        {analysisResult.improvementAreas.map((w, i) => <li key={i}>{w}</li>)}
+                    <ul className="list-none pl-0 space-y-3">
+                        {analysisResult.improvementAreas.map((item, i) => (
+                            <li key={i} className="text-sm">
+                                <strong className={`block ${getImportanceColor(item.importance)}`}>
+                                    [{item.importance}] {item.area}
+                                </strong>
+                                <span className="text-muted-foreground">{item.suggestion}</span>
+                            </li>
+                        ))}
                     </ul>
                 </CardContent>
             </Card>
+            {/* --- END OF CORRECTION --- */}
+
         </div>
         <Card>
             <CardHeader>

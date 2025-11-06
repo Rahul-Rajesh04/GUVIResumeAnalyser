@@ -8,7 +8,7 @@ export interface ResumeAnalysis {
   tailoringScore: number;
   alignmentAnalysis: string;
   strengths: string[];
-  improvementAreas: string[];
+  improvementAreas: ImprovementArea[];
   actionableSuggestions: Array<{
     category: string;
     priority: "high" | "medium" | "low";
@@ -25,6 +25,12 @@ interface DetailedMatch {
   evidence: string;
   quality: "Strong" | "Good" | "Weak";
   reason: string;
+}
+
+interface ImprovementArea {
+  area: string;
+  suggestion: string;
+  importance: "High" | "Medium" | "Low";
 }
 
 /* ------------------------------------------------------------------ */
@@ -111,26 +117,31 @@ export async function analyzeResume(
     }
     // --- END NEW LOGIC ---
 
-    const improvementAreas = validationErrors.length
-      ? ["Some required fields are missing (e.g., contact.email)."]
-      : [];
+// Map the new detailed improvement areas from the backend data
+    const improvementAreas: ImprovementArea[] = data.improvementAreas || [];
 
     // Base the score only on 'Strong' quality matches
     const tailoringScore = Math.min(100, strongMatchCount * 25); // 25 points per "Strong" match
 
     return {
-      tailoringScore,
-      alignmentAnalysis: `Found ${strongMatchCount} 'Strong' quality matches.`,
-      strengths, // This is now our new, detailed list!
-      improvementAreas,
-      actionableSuggestions: [
-        { category: "skills", priority: "medium", items: improvementAreas },
-      ],
-      error: false,
-      message: validationErrors.length
-        ? "Validation issues detected — resume data incomplete."
-        : "Resume analysis completed successfully.",
-    };
+  tailoringScore,
+  alignmentAnalysis: `Found ${strongMatchCount} 'Strong' quality matches.`,
+  strengths, // This is now our new, detailed list!
+
+  // --- FIX #1: REMOVE THE HACK ---
+  // This passes the full object array to your component,
+  // which is now working correctly.
+  improvementAreas,
+
+  // --- FIX #2: REMOVE THE BUGGY DATA ---
+  // This stops the data from being copied.
+  actionableSuggestions: [], 
+
+  error: false,
+  message: validationErrors.length
+    ? "Validation issues detected — resume data incomplete."
+    : "Resume analysis completed successfully.",
+};
   } catch (error) {
     console.error("Failed to fetch from backend:", error);
     return {
