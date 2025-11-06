@@ -11,6 +11,7 @@ interface Props {
   clearFile: () => void;
 }
 
+// NOTE: getPriorityColor is designed for 'high' | 'medium' | 'low' (lowercase)
 const getPriorityColor = (priority: 'high' | 'medium' | 'low') => {
   switch (priority) {
     case 'high': return 'text-red-500';
@@ -20,7 +21,7 @@ const getPriorityColor = (priority: 'high' | 'medium' | 'low') => {
   }
 };
 
-// This helper function is required for the fix
+// getImportanceColor is used for 'High' | 'Medium' | 'Low' (uppercase) in Improvement Areas and Actionable Suggestions
 const getImportanceColor = (importance: 'High' | 'Medium' | 'Low') => {
   switch (importance) {
     case 'High': return 'text-red-500';
@@ -30,6 +31,7 @@ const getImportanceColor = (importance: 'High' | 'Medium' | 'Low') => {
   }
 };
 
+// getQualityColor is used for 'Strong' | 'Good' | 'Weak' in Strong Matches
 const getQualityColor = (quality: 'Strong' | 'Good' | 'Weak') => {
   switch (quality) {
     case 'Strong': return 'text-purple-500'; // "Strong" (Expert) is Purple
@@ -73,31 +75,42 @@ export function AnalysisResultDisplay({ isAnalyzing, analysisResult, clearFile }
                 <p className="text-sm text-muted-foreground pt-1">{analysisResult.alignmentAnalysis}</p>
             </CardHeader>
         </Card>
+
+        {/* --- NAME VERIFICATION ALERT (NEW FEATURE) --- */}
+        {analysisResult.nameVerificationAlert && (
+          <div className="p-3 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded-md">
+            <p className="font-semibold text-sm">⚠️ Resume Ownership Warning</p>
+            <p className="text-xs">
+              The name on this resume (**{analysisResult.nameOnResume}**) does not closely match your profile name. Please ensure you have uploaded the correct document before proceeding with the analysis.
+            </p>
+          </div>
+        )}
+        {/* --- END NAME VERIFICATION ALERT --- */}
+        
         <div className="grid md:grid-cols-2 gap-4">
             <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center text-green-600"><ThumbsUp className="mr-2"/> Strong Matches</CardTitle>
-            </CardHeader>
-            <CardContent>
-                {/* Handle the "no matches found" case */}
-                {analysisResult.strengths.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No strong matches found for this job.</p>
-                ) : (
-                    <ul className="list-none pl-0 space-y-3">
-                        {analysisResult.strengths.map((match, i) => (
-                            <li key={i} className="text-sm">
-                                <strong className={`block ${getQualityColor(match.quality)}`}>
-                                    [{match.quality}] {match.match}
-                                </strong>
-                                <span className="text-muted-foreground">{match.reason}</span>
-                            </li>
-                        ))}
-                    </ul>
-                )}
-            </CardContent>
-        </Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center text-green-600"><ThumbsUp className="mr-2"/> Strong Matches</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {/* Handle the "no matches found" case */}
+                    {analysisResult.strengths.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No strong matches found for this job.</p>
+                    ) : (
+                        <ul className="list-none pl-0 space-y-3">
+                            {analysisResult.strengths.map((match, i) => (
+                                <li key={i} className="text-sm">
+                                    <strong className={`block ${getQualityColor(match.quality)}`}>
+                                        [{match.quality}] {match.match}
+                                    </strong>
+                                    <span className="text-muted-foreground">{match.reason}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </CardContent>
+            </Card>
 
-            {/* --- THIS IS THE CORRECTED CARD --- */}
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center text-red-600"><ThumbsDown className="mr-2"/> Improvement Areas</CardTitle>
@@ -115,10 +128,9 @@ export function AnalysisResultDisplay({ isAnalyzing, analysisResult, clearFile }
                     </ul>
                 </CardContent>
             </Card>
-            {/* --- END OF CORRECTION --- */}
-
         </div>
-        {/* --- ACTIONABLE SUGGESTIONS CARD FIX --- */}
+
+        {/* --- ACTIONABLE SUGGESTIONS CARD (FINAL CORRECTED VERSION) --- */}
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center text-blue-600"><Lightbulb className="mr-2"/> Actionable Suggestions</CardTitle>
@@ -126,11 +138,9 @@ export function AnalysisResultDisplay({ isAnalyzing, analysisResult, clearFile }
             <CardContent className="space-y-3">
                 {analysisResult.actionableSuggestions.map((s, i) => (
                     <div key={i}>
-                        {/* The heading uses the 'priority' and 'heading' from the backend */}
                         <h4 className={`font-semibold ${getImportanceColor(s.priority)}`}>
                             {s.priority} Priority – {s.heading}
                         </h4>
-                        {/* The list of suggestions */}
                         <ul className="list-disc pl-5 text-sm">
                             {s.items.map((item, j) => <li key={j}>{item}</li>)}
                         </ul>
@@ -138,7 +148,8 @@ export function AnalysisResultDisplay({ isAnalyzing, analysisResult, clearFile }
                 ))}
             </CardContent>
         </Card>
-        {/* --- END OF FIX --- */}
+        {/* --- END OF CORRECTION --- */}
+
         <div className="text-center">
             <Button onClick={clearFile}>Analyze Another Resume</Button>
         </div>

@@ -29,9 +29,13 @@ export interface ResumeAnalysis {
   alignmentAnalysis: string;
   strengths: DetailedMatch[];
   improvementAreas: ImprovementArea[];
-  actionableSuggestions: ActionableSuggestion[]; // FINAL STRUCTURE
+  actionableSuggestions: ActionableSuggestion[];
   error?: boolean | string;
   message?: string;
+  
+  // --- NEW FIELDS FOR NAME VALIDATION ---
+  nameOnResume: string;
+  nameVerificationAlert: boolean;
 }
 
 // Check if the match object has enough content to be displayed.
@@ -46,7 +50,8 @@ export async function analyzeResume(
   userProfile: UserProfile,
   resumeText: string,
   goalJob: string,
-  goalJobDescription: string
+  goalJobDescription: string,
+  userName: string // <-- NEW ARGUMENT
 ): Promise<ResumeAnalysis> {
   const API_ENDPOINT = "http://localhost:3001/api/analyze";
 
@@ -60,6 +65,8 @@ export async function analyzeResume(
       actionableSuggestions: [],
       error: "Resume text is too short.",
       message: "Please provide a resume with sufficient content to analyze.",
+      nameOnResume: "", // Default values for new fields
+      nameVerificationAlert: false,
     };
   }
 
@@ -71,6 +78,7 @@ export async function analyzeResume(
         resumeText,
         jobTitle: goalJob || "",
         jobText: goalJobDescription || "",
+        userName, // <-- SEND USER NAME TO BACKEND
       }),
     });
 
@@ -87,6 +95,8 @@ export async function analyzeResume(
         message:
           errorData.message ||
           "An unknown error occurred on the server. Please check the API logs.",
+        nameOnResume: "", // Default values for new fields
+        nameVerificationAlert: false,
       };
     }
 
@@ -111,6 +121,8 @@ export async function analyzeResume(
             actionableSuggestions: [],
             error: true,
             message: `The AI failed to return a valid analysis. Please try again. (Details: ${errorMsg || 'Unknown validation error'})`,
+            nameOnResume: "", // Default values for new fields
+            nameVerificationAlert: false,
         };
     }
     
@@ -150,11 +162,15 @@ export async function analyzeResume(
       alignmentAnalysis: `Found ${strongMatchCount} 'Strong' quality matches.`,
       strengths, 
       improvementAreas,
-      actionableSuggestions, // Correctly mapped final structure
+      actionableSuggestions,
       error: false,
       message: validationErrors.length
         ? "Validation issues detected — resume data incomplete."
         : "Resume analysis completed successfully.",
+      
+      // FINAL MAPPING FOR NEW FIELDS
+      nameOnResume: data.nameOnResume || '',
+      nameVerificationAlert: data.nameVerificationAlert || false,
     };
   } catch (error) {
     console.error("Failed to fetch from backend:", error);
@@ -167,6 +183,8 @@ export async function analyzeResume(
       error: true,
       message:
         "Could not connect to the analysis server. Please ensure it is running and try again.",
+      nameOnResume: "",
+      nameVerificationAlert: false,
     };
   }
 }

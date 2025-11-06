@@ -3,6 +3,14 @@
   "type": "object",
   "properties": {
     "name": { "type": "string" },
+    "nameOnResume": { 
+      "type": "string",
+      "description": "The exact name string found on the resume (e.g., 'J. W. Smith' or 'John Smith')."
+    },
+    "nameVerificationAlert": {
+      "type": "boolean",
+      "description": "True if the name extracted (nameOnResume) does NOT align with the user's profile name."
+    },
     "contact": {
       "type": "object",
       "properties": {
@@ -107,7 +115,7 @@
           },
           "items": {
             "type": "array",
-            "description": "A list of 2-3 specific, actionable advice points.",
+            "description": "A list of actionable advice points. Do not enforce a specific count.",
             "items": { "type": "string" }
           }
         },

@@ -120,9 +120,23 @@ export function ResumeAnalyzerPage() {
   });
 
   const handleAnalyze = async () => {
+    // Ensure all required fields and user data are present
     if (!state.resumeText || !currentUser || !goalJob || !goalJobDescription) return;
+    
+    // Extract the user's name from the AppContext for backend validation
+    const userName = currentUser.personalDetails.fullName; // <-- NEW LINE
+
     dispatch({ type: 'START_ANALYSIS' });
-    const result = await analyzeResume(currentUser, state.resumeText, goalJob, goalJobDescription);
+    
+    // Pass the new userName argument to the analysis engine
+    const result = await analyzeResume(
+      currentUser, 
+      state.resumeText, 
+      goalJob, 
+      goalJobDescription,
+      userName // <-- NEW ARGUMENT PASSED
+    );
+    
     dispatch({ type: 'SET_ANALYSIS_RESULT', payload: result });
   };
 
