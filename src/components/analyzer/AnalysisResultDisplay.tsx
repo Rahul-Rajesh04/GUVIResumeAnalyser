@@ -118,6 +118,7 @@ export function AnalysisResultDisplay({ isAnalyzing, analysisResult, clearFile }
             {/* --- END OF CORRECTION --- */}
 
         </div>
+        {/* --- ACTIONABLE SUGGESTIONS CARD FIX --- */}
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center text-blue-600"><Lightbulb className="mr-2"/> Actionable Suggestions</CardTitle>
@@ -125,9 +126,11 @@ export function AnalysisResultDisplay({ isAnalyzing, analysisResult, clearFile }
             <CardContent className="space-y-3">
                 {analysisResult.actionableSuggestions.map((s, i) => (
                     <div key={i}>
-                        <h4 className={`font-semibold ${getPriorityColor(s.priority)}`}>
-                            {s.category} (Priority: {s.priority})
+                        {/* The heading uses the 'priority' and 'heading' from the backend */}
+                        <h4 className={`font-semibold ${getImportanceColor(s.priority)}`}>
+                            {s.priority} Priority – {s.heading}
                         </h4>
+                        {/* The list of suggestions */}
                         <ul className="list-disc pl-5 text-sm">
                             {s.items.map((item, j) => <li key={j}>{item}</li>)}
                         </ul>
@@ -135,6 +138,7 @@ export function AnalysisResultDisplay({ isAnalyzing, analysisResult, clearFile }
                 ))}
             </CardContent>
         </Card>
+        {/* --- END OF FIX --- */}
         <div className="text-center">
             <Button onClick={clearFile}>Analyze Another Resume</Button>
         </div>

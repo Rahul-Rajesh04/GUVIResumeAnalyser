@@ -89,12 +89,37 @@
         },
         "required": ["area", "suggestion", "importance"]
       }
+    },
+    "actionableSuggestions": {
+      "type": "array",
+      "description": "An array of 3 objects, one for each priority level (High, Medium, Low), containing actionable next steps for the candidate, ensuring all three priority levels are present.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "priority": {
+            "type": "string",
+            "enum": ["High", "Medium", "Low"],
+            "description": "The priority level for this group of suggestions. Use 'High' for Crucial, 'Medium' for Important, 'Low' for Minor."
+          },
+          "heading": {
+            "type": "string",
+            "description": "A descriptive heading for the priority level (e.g., 'Crucial structural and content improvements')."
+          },
+          "items": {
+            "type": "array",
+            "description": "A list of 2-3 specific, actionable advice points.",
+            "items": { "type": "string" }
+          }
+        },
+        "required": ["priority", "heading", "items"]
+      }
     }
   },
   "additionalProperties": true,
   "required": [
     "skills",
     "strongMatches",
-    "improvementAreas"
+    "improvementAreas",
+    "actionableSuggestions"
   ]
 }

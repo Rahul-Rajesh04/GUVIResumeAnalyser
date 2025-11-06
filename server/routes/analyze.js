@@ -14,6 +14,7 @@ const validate = ajv.compile(schema);
 
 // REPLACE the old SYSTEM constant with this new one:
 // REPLACE the old SYSTEM constant with this new one:
+// REPLACE the old SYSTEM constant with this new one:
 const SYSTEM = `You are an expert technical recruiter with 20 years of experience.
 Your task is to analyze the RESUME and compare it *vigilantly* against the provided JOB description.
 Output ONLY valid JSON that matches the JSON Schema EXACTLY.
@@ -26,29 +27,26 @@ CRITICAL INSTRUCTIONS:
     * **'Good'**: Recent, but lacks quantifiable impact.
     * **'Weak'**: Mentioned, but is old (3+ years ago) or seems like a minor part of a project.
 4.  **Write the 'reason' (strongMatches):** This is for a hiring manager. Write a 1-2 sentence analysis explaining the match's quality.
-    * *Example*: "Job requires 'Risk Management'. Resume lists this under their most recent role. This is a Strong match."
-    * *Example*: "Job requires 'React'. Resume mentions a project from 2019. This is a Weak match due to recency."
 5.  **Be Strict:** If no strong matches are found, return an empty array for 'strongMatches'.
 
-// --- NEW INSTRUCTIONS START HERE ---
+// --- IMPROVEMENT AREAS (5-7 POINTS ENFORCED) ---
 
 6.  **Find Gaps (improvementAreas):** Identify the top 5-7 *most significant* gaps or weaknesses in the RESUME when compared to the JOB. This is for the *candidate*, so the tone should be constructive.
 7.  **Analyze Gaps (improvementAreas):** For each gap, provide the following:
     * **'area'**: A short title for the problem (e.g., 'Missing Keyword: Cloud', 'Lack of Metrics', 'Outdated Tech Stack').
     * **'suggestion'**: Write a 1-2 sentence *actionable suggestion*. Explain the gap and what to add.
-        * *Example*: "Job requires 'AWS or Azure'. Resume does not mention any cloud platforms. This is a High importance gap. Suggestion: If you have cloud experience, add it to your skills or project descriptions."
-        * *Example*: "Resume mentions 'managing projects' but lacks specifics. This is a Medium importance gap. Suggestion: Add quantifiable results (e.g., 'managed 5 projects on time') to show impact."
     * **'importance'**: Rate the gap as 'High', 'Medium', or 'Low'.
-        * **'High'**: A core, mandatory requirement from the job description is completely missing.
-        * **'Medium'**: A skill is mentioned but lacks depth, or a secondary requirement is missing.
-        * **'Low'**: A minor "nice-to-have" skill or a formatting issue.
-8.  **Be Helpful:** If the resume is excellent and no gaps are found, return an empty array for 'improvementAreas'.
+8.  **NEVER RETURN EMPTY:** You must find and populate a minimum of 1 improvement area, as all resumes have room for growth.
 
-// --- NEW INSTRUCTIONS END HERE ---
+// --- ACTIONABLE SUGGESTIONS (RICH DATA FORMAT) ---
+9. **Suggest Next Steps (actionableSuggestions):** Generate an array of exactly 3 objects, one for each priority level: 'High', 'Medium', and 'Low'. Ensure the tone is professionally encouraging.
 
-9.  **Fill 'skills'**: The top-level 'skills' array should still contain a general list of all skills extracted from the resume.`;
+10. **Priority Rule and Headings:** The structure must match the schema exactly:
+    * **High Priority (🔴):** Use 'High' for the 'priority' field. Use heading: 'Crucial structural and content improvements'. Advice must cover hierarchy (moving key sections up) and adding quantifiable results/metrics. If projects are missing, suggest adding a relevant one, e.g., 'AI-Powered Resume Screener using Python and NLP' for data roles.
+    * **Medium Priority (🟠):** Use 'Medium' for the 'priority' field. Use heading: 'Important optimizations for clarity and flow'. Advice must cover ATS optimization, professional summaries, and applying for more domain-relevant interviews (e.g., 'Junior Machine Learning Engineer').
+    * **Low Priority (⚪):** Use 'Low' for the 'priority' field. Use heading: 'Minor aesthetic or optional adjustments'. Advice must cover minor formatting, font consistency, or spacing.
 
-// ... (the rest of the file stays exactly the same)
+11. **Fill 'skills'**: The top-level 'skills' array should still contain a general list of all skills extracted from the resume.`;
 
 // helpers
 function stripCodeFences(s) {

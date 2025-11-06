@@ -2,24 +2,9 @@
 import { UserProfile } from "../contexts/AppContext";
 
 /* ------------------------------------------------------------------ */
-/* 1. Structure expected by your existing UI                          */
+/* 1. STRUCTURE DEFINITIONS (Interfaces)                              */
 /* ------------------------------------------------------------------ */
-export interface ResumeAnalysis {
-  tailoringScore: number;
-  alignmentAnalysis: string;
-  strengths: DetailedMatch[];
-  improvementAreas: ImprovementArea[];
-  actionableSuggestions: Array<{
-    category: string;
-    priority: "high" | "medium" | "low";
-    items: string[];
-  }>;
-  error?: boolean | string;
-  message?: string;
-}
 
-// --- NEW HELPER INTERFACE ---
-// This defines the new, detailed match object we expect from the AI
 interface DetailedMatch {
   match: string;
   evidence: string;
@@ -33,16 +18,29 @@ interface ImprovementArea {
   importance: "High" | "Medium" | "Low";
 }
 
-// ... around line 28, near DetailedMatch and ImprovementArea interfaces
+interface ActionableSuggestion {
+  priority: "High" | "Medium" | "Low";
+  heading: string;
+  items: string[];
+}
 
-// Check if the match object has data we can actually display
+export interface ResumeAnalysis {
+  tailoringScore: number;
+  alignmentAnalysis: string;
+  strengths: DetailedMatch[];
+  improvementAreas: ImprovementArea[];
+  actionableSuggestions: ActionableSuggestion[]; // FINAL STRUCTURE
+  error?: boolean | string;
+  message?: string;
+}
+
+// Check if the match object has enough content to be displayed.
 const isValidMatch = (match: DetailedMatch): boolean => {
-  // Must have a match keyword and a reason to be considered valid
   return !!match.match && !!match.reason;
 };
 
 /* ------------------------------------------------------------------ */
-/* 2. Main function: now calls your local Express backend             */
+/* 2. MAIN ANALYSIS FUNCTION                                          */
 /* ------------------------------------------------------------------ */
 export async function analyzeResume(
   userProfile: UserProfile,
@@ -52,7 +50,7 @@ export async function analyzeResume(
 ): Promise<ResumeAnalysis> {
   const API_ENDPOINT = "http://localhost:3001/api/analyze";
 
-  // Pre-flight guard (same as before)
+  // Pre-flight guard
   if (!resumeText || resumeText.trim().length < 50) {
     return {
       tailoringScore: 0,
@@ -74,8 +72,6 @@ export async function analyzeResume(
         jobTitle: goalJob || "",
         jobText: goalJobDescription || "",
       }),
-
-// ...
     });
 
     if (!response.ok) {
@@ -95,79 +91,71 @@ export async function analyzeResume(
     }
 
     /* -------------------------------------------------------------- */
-    /* 3. Map backend JSON → UI-friendly structure (NEW LOGIC)        */
+    /* 3. Map backend JSON → UI-friendly structure                    */
     /* -------------------------------------------------------------- */
-    const result = await response.json(); // { ok, data, ... }
-    const data = result?.data || {};
+    const result = await response.json(); // { ok, data, validationErrors, ... }
     const validationErrors = result?.validationErrors || [];
+    
+    // CRITICAL: Check for internal server validation failure (AI failed schema)
+    if (!result.ok) {
+        console.error("Backend validation error:", result.validationErrors);
+        const errorMsg = validationErrors?.map(
+            (err: any) => `${err.instancePath || 'Root'} ${err.message}`
+        ).join(', ');
+        
+        return {
+            tailoringScore: 0,
+            alignmentAnalysis: "",
+            strengths: [],
+            improvementAreas: [],
+            actionableSuggestions: [],
+            error: true,
+            message: `The AI failed to return a valid analysis. Please try again. (Details: ${errorMsg || 'Unknown validation error'})`,
+        };
+    }
+    
+    const data = result?.data || {};
 
-// --- NEW DETAILED STRENGTHS LOGIC ---
-const detailedMatches: DetailedMatch[] = data.strongMatches || [];
+    // --- DETAILED STRENGTHS LOGIC (FILTER FIX) ---
+    const detailedMatches: DetailedMatch[] = data.strongMatches || [];
+    const filteredMatches = detailedMatches.filter(isValidMatch); 
+    
+    let strongMatchCount = 0;
+    filteredMatches.forEach(match => {
+      if (match.quality === "Strong") strongMatchCount++;
+    });
 
-// NEW: Filter out any corrupted/empty match objects
-const filteredMatches = detailedMatches.filter(isValidMatch); 
+    let strengths: DetailedMatch[] = filteredMatches;
 
-let strongMatchCount = 0;
+    // Handle the "no job description" case only if filteredMatches is zero
+    if (filteredMatches.length === 0 && (!goalJobDescription || goalJobDescription.trim().length === 0)) {
+        strengths = (data.skills || []).slice(0, 5).map((skill: string) => ({
+            match: skill,
+            evidence: 'From resume skills list',
+            quality: 'Good',
+            reason: 'This is a general skill listed on your resume.'
+        }));
+    }
+    // --- END NEW LOGIC ---
 
-// We count the strong matches only on the CLEANED list
-filteredMatches.forEach(match => {
-  if (match.quality === "Strong") strongMatchCount++;
-});
-
-// This will be our new array of objects (either clean matches or empty)
-let strengths: DetailedMatch[] = filteredMatches;
-
-// Handle the "no job description" case only if filteredMatches is zero
-if (filteredMatches.length === 0 && (!goalJobDescription || goalJobDescription.trim().length === 0)) {
-  // No job desc, so just list resume skills. We must map them to the DetailedMatch shape.
-  strengths = (data.skills || []).slice(0, 5).map((skill: string) => ({
-    match: skill,
-    evidence: 'From resume skills list',
-    quality: 'Good',
-    reason: 'This is a general skill listed on your resume.'
-  }));
-} else if (filteredMatches.length === 0 && goalJobDescription && goalJobDescription.trim().length > 0) {
-  // Explicitly handle: Job desc provided, but after filtering, no strong matches remain.
-  // We will let 'strengths' remain as an empty array here, which triggers the 'No strong matches found' message in the UI.
-}
-// --- END NEW LOGIC ---
-// Handle the "no job description" case
-if (detailedMatches.length === 0 && (!goalJobDescription || goalJobDescription.trim().length === 0)) {
-  // No job desc, so just list resume skills. We must map them to the DetailedMatch shape.
-  strengths = (data.skills || []).slice(0, 5).map((skill: string) => ({
-    match: skill,
-    evidence: 'From resume skills list', // Add placeholder evidence
-    quality: 'Good',
-    reason: 'This is a general skill listed on your resume.' // Add placeholder reason
-  }));
-}
-// --- END NEW LOGIC ---
-
-// Map the new detailed improvement areas from the backend data
+    // Map other fields
     const improvementAreas: ImprovementArea[] = data.improvementAreas || [];
+    const actionableSuggestions: ActionableSuggestion[] = data.actionableSuggestions || [];
 
     // Base the score only on 'Strong' quality matches
     const tailoringScore = Math.min(100, strongMatchCount * 25); // 25 points per "Strong" match
 
     return {
-  tailoringScore,
-  alignmentAnalysis: `Found ${strongMatchCount} 'Strong' quality matches.`,
-  strengths, // This is now our new, detailed list!
-
-  // --- FIX #1: REMOVE THE HACK ---
-  // This passes the full object array to your component,
-  // which is now working correctly.
-  improvementAreas,
-
-  // --- FIX #2: REMOVE THE BUGGY DATA ---
-  // This stops the data from being copied.
-  actionableSuggestions: [], 
-
-  error: false,
-  message: validationErrors.length
-    ? "Validation issues detected — resume data incomplete."
-    : "Resume analysis completed successfully.",
-};
+      tailoringScore,
+      alignmentAnalysis: `Found ${strongMatchCount} 'Strong' quality matches.`,
+      strengths, 
+      improvementAreas,
+      actionableSuggestions, // Correctly mapped final structure
+      error: false,
+      message: validationErrors.length
+        ? "Validation issues detected — resume data incomplete."
+        : "Resume analysis completed successfully.",
+    };
   } catch (error) {
     console.error("Failed to fetch from backend:", error);
     return {
