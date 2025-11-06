@@ -30,6 +30,15 @@ const getImportanceColor = (importance: 'High' | 'Medium' | 'Low') => {
   }
 };
 
+const getQualityColor = (quality: 'Strong' | 'Good' | 'Weak') => {
+  switch (quality) {
+    case 'Strong': return 'text-purple-500'; // "Strong" (Expert) is Purple
+    case 'Good': return 'text-green-600';     // "Good" is Green
+    case 'Weak': return 'text-gray-500';       // "Weak" is Grey
+    default: return 'text-gray-500';
+  }
+};
+
 export function AnalysisResultDisplay({ isAnalyzing, analysisResult, clearFile }: Props) {
   if (isAnalyzing) {
     return (
@@ -66,15 +75,27 @@ export function AnalysisResultDisplay({ isAnalyzing, analysisResult, clearFile }
         </Card>
         <div className="grid md:grid-cols-2 gap-4">
             <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center text-green-600"><ThumbsUp className="mr-2"/> Strong Matches</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <ul className="list-disc pl-5 space-y-1">
-                        {analysisResult.strengths.map((s, i) => <li key={i}>{s}</li>)}
+            <CardHeader>
+                <CardTitle className="flex items-center text-green-600"><ThumbsUp className="mr-2"/> Strong Matches</CardTitle>
+            </CardHeader>
+            <CardContent>
+                {/* Handle the "no matches found" case */}
+                {analysisResult.strengths.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No strong matches found for this job.</p>
+                ) : (
+                    <ul className="list-none pl-0 space-y-3">
+                        {analysisResult.strengths.map((match, i) => (
+                            <li key={i} className="text-sm">
+                                <strong className={`block ${getQualityColor(match.quality)}`}>
+                                    [{match.quality}] {match.match}
+                                </strong>
+                                <span className="text-muted-foreground">{match.reason}</span>
+                            </li>
+                        ))}
                     </ul>
-                </CardContent>
-            </Card>
+                )}
+            </CardContent>
+        </Card>
 
             {/* --- THIS IS THE CORRECTED CARD --- */}
             <Card>

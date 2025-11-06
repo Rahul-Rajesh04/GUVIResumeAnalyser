@@ -7,7 +7,7 @@ import { UserProfile } from "../contexts/AppContext";
 export interface ResumeAnalysis {
   tailoringScore: number;
   alignmentAnalysis: string;
-  strengths: string[];
+  strengths: DetailedMatch[];
   improvementAreas: ImprovementArea[];
   actionableSuggestions: Array<{
     category: string;
@@ -32,6 +32,14 @@ interface ImprovementArea {
   suggestion: string;
   importance: "High" | "Medium" | "Low";
 }
+
+// ... around line 28, near DetailedMatch and ImprovementArea interfaces
+
+// Check if the match object has data we can actually display
+const isValidMatch = (match: DetailedMatch): boolean => {
+  // Must have a match keyword and a reason to be considered valid
+  return !!match.match && !!match.reason;
+};
 
 /* ------------------------------------------------------------------ */
 /* 2. Main function: now calls your local Express backend             */
@@ -93,29 +101,47 @@ export async function analyzeResume(
     const data = result?.data || {};
     const validationErrors = result?.validationErrors || [];
 
-    // --- NEW DETAILED STRENGTHS LOGIC ---
-    let strengths: string[] = [];
-    const detailedMatches: DetailedMatch[] = data.strongMatches || [];
-    let strongMatchCount = 0;
-    
-    if (detailedMatches.length > 0) {
-      // We have real, detailed matches from the AI!
-      strengths = detailedMatches.map(
-        (match: DetailedMatch) => {
-          if (match.quality === "Strong") strongMatchCount++;
-          // Format the detailed analysis for the UI:
-          // [Quality] Match: Reason
-          return `[${match.quality}] ${match.match}: ${match.reason}`;
-        }
-      );
-    } else if (!goalJobDescription || goalJobDescription.trim().length === 0) {
-      // No job description was provided, so just list resume skills
-      strengths = (data.skills || []).slice(0, 5).map(skill => `[Good] ${skill} (from resume)`);
-    } else {
-      // A job was provided, but no matches were found
-      strengths = ["No strong matches found between your resume and this job."];
-    }
-    // --- END NEW LOGIC ---
+// --- NEW DETAILED STRENGTHS LOGIC ---
+const detailedMatches: DetailedMatch[] = data.strongMatches || [];
+
+// NEW: Filter out any corrupted/empty match objects
+const filteredMatches = detailedMatches.filter(isValidMatch); 
+
+let strongMatchCount = 0;
+
+// We count the strong matches only on the CLEANED list
+filteredMatches.forEach(match => {
+  if (match.quality === "Strong") strongMatchCount++;
+});
+
+// This will be our new array of objects (either clean matches or empty)
+let strengths: DetailedMatch[] = filteredMatches;
+
+// Handle the "no job description" case only if filteredMatches is zero
+if (filteredMatches.length === 0 && (!goalJobDescription || goalJobDescription.trim().length === 0)) {
+  // No job desc, so just list resume skills. We must map them to the DetailedMatch shape.
+  strengths = (data.skills || []).slice(0, 5).map((skill: string) => ({
+    match: skill,
+    evidence: 'From resume skills list',
+    quality: 'Good',
+    reason: 'This is a general skill listed on your resume.'
+  }));
+} else if (filteredMatches.length === 0 && goalJobDescription && goalJobDescription.trim().length > 0) {
+  // Explicitly handle: Job desc provided, but after filtering, no strong matches remain.
+  // We will let 'strengths' remain as an empty array here, which triggers the 'No strong matches found' message in the UI.
+}
+// --- END NEW LOGIC ---
+// Handle the "no job description" case
+if (detailedMatches.length === 0 && (!goalJobDescription || goalJobDescription.trim().length === 0)) {
+  // No job desc, so just list resume skills. We must map them to the DetailedMatch shape.
+  strengths = (data.skills || []).slice(0, 5).map((skill: string) => ({
+    match: skill,
+    evidence: 'From resume skills list', // Add placeholder evidence
+    quality: 'Good',
+    reason: 'This is a general skill listed on your resume.' // Add placeholder reason
+  }));
+}
+// --- END NEW LOGIC ---
 
 // Map the new detailed improvement areas from the backend data
     const improvementAreas: ImprovementArea[] = data.improvementAreas || [];
