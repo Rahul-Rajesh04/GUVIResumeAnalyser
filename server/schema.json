@@ -1,0 +1,41 @@
+{
+  "title": "ResumeExtraction",
+  "type": "object",
+  "properties": {
+    "name": { "type": "string" },
+    "contact": {
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "links": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "education": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "degree": { "type": "string" },
+          "institute": { "type": "string" },
+          "year": { "type": "string" }
+        }
+      }
+    },
+    "experience": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string" },
+          "company": { "type": "string" },
+          "start": { "type": "string" },
+          "end": { "type": ["string", "null"] },
+          "bullets": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "skills": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": true
+}

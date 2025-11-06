@@ -1,7 +1,9 @@
 // src/ai/ResumeEngine.ts
-import { UserProfile } from '../contexts/AppContext';
+import { UserProfile } from "../contexts/AppContext";
 
-// Define the structure of the AI's analysis response, which will now come from your server.
+/* ------------------------------------------------------------------ */
+/* 1. Structure expected by your existing UI                          */
+/* ------------------------------------------------------------------ */
 export interface ResumeAnalysis {
   tailoringScore: number;
   alignmentAnalysis: string;
@@ -9,24 +11,25 @@ export interface ResumeAnalysis {
   improvementAreas: string[];
   actionableSuggestions: Array<{
     category: string;
-    priority: 'high' | 'medium' | 'low';
+    priority: "high" | "medium" | "low";
     items: string[];
   }>;
-  error?: boolean | string; // Made this flexible to handle different error shapes
+  error?: boolean | string;
   message?: string;
 }
 
-// This function now calls YOUR backend server, not Google's API directly.
+/* ------------------------------------------------------------------ */
+/* 2. Main function: now calls your local Express backend             */
+/* ------------------------------------------------------------------ */
 export async function analyzeResume(
   userProfile: UserProfile,
   resumeText: string,
   goalJob: string,
   goalJobDescription: string
 ): Promise<ResumeAnalysis> {
-  // Your local backend server endpoint
-  const API_ENDPOINT = 'http://localhost:3001/api/opensource-analyze-resume';
+  const API_ENDPOINT = "http://localhost:3001/api/analyze";
 
-  // The pre-analysis check from your original code is still a good idea.
+  // Pre-flight guard (same as before)
   if (!resumeText || resumeText.trim().length < 50) {
     return {
       tailoringScore: 0,
@@ -35,55 +38,75 @@ export async function analyzeResume(
       improvementAreas: [],
       actionableSuggestions: [],
       error: "Resume text is too short.",
-      message: "Please provide a resume with sufficient content to analyze."
+      message: "Please provide a resume with sufficient content to analyze.",
     };
   }
 
   try {
     const response = await fetch(API_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      // Send all the necessary data in the request body to your server
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        userProfile,
         resumeText,
-        goalJob,
-        goalJobDescription,
+        jobText: goalJobDescription || "",
       }),
     });
 
-    // If the server responds with an error (e.g., status 500), handle it
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Server responded with an error:', errorData);
+      const errorData = await response.json().catch(() => ({}));
+      console.error("Server responded with an error:", errorData);
       return {
-        error: true,
-        message: errorData.message || 'An unknown error occurred on the server.',
         tailoringScore: 0,
-        alignmentAnalysis: '',
+        alignmentAnalysis: "",
         strengths: [],
         improvementAreas: [],
         actionableSuggestions: [],
+        error: true,
+        message:
+          errorData.message ||
+          "An unknown error occurred on the server. Please check the API logs.",
       };
     }
 
-    // If the response is successful, parse the JSON from your server and return it
-    const analysisResult: ResumeAnalysis = await response.json();
-    return analysisResult;
+    /* -------------------------------------------------------------- */
+    /* 3. Map backend JSON → UI-friendly structure                    */
+    /* -------------------------------------------------------------- */
+    const result = await response.json(); // { ok, data, evidence?, validationErrors? }
+    const data = result?.data || {};
+    const validationErrors = result?.validationErrors || [];
 
-  } catch (error) {
-    console.error('Failed to fetch from backend:', error);
-    // Return a structured error object if the fetch call itself fails (e.g., server is not running)
+    const skills = Array.isArray(data.skills) ? data.skills : [];
+    const strengths = skills.slice(0, 5);
+    const improvementAreas = validationErrors.length
+      ? ["Some required fields are missing (e.g., contact.email)."]
+      : [];
+
+    const tailoringScore = Math.min(100, strengths.length * 20);
+
     return {
-      error: true,
-      message: 'Could not connect to the analysis server. Please ensure it is running and try again.',
+      tailoringScore,
+      alignmentAnalysis: `Found ${strengths.length} key skills in the resume.`,
+      strengths,
+      improvementAreas,
+      actionableSuggestions: [
+        { category: "skills", priority: "medium", items: improvementAreas },
+      ],
+      error: false,
+      message: validationErrors.length
+        ? "Validation issues detected — resume data incomplete."
+        : "Resume analysis completed successfully.",
+    };
+  } catch (error) {
+    console.error("Failed to fetch from backend:", error);
+    return {
       tailoringScore: 0,
-      alignmentAnalysis: '',
+      alignmentAnalysis: "",
       strengths: [],
       improvementAreas: [],
       actionableSuggestions: [],
+      error: true,
+      message:
+        "Could not connect to the analysis server. Please ensure it is running and try again.",
     };
   }
 }
