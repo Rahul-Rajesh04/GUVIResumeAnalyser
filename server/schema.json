@@ -35,7 +35,38 @@
         }
       }
     },
-    "skills": { "type": "array", "items": { "type": "string" } }
+    "strongMatches": {
+      "type": "array",
+      "description": "A list of the strongest matches. ONLY include skills/experiences from the RESUME that are DIRECTLY required by the JOB. Evaluate each match based on evidence.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "match": {
+            "type": "string",
+            "description": "The matching keyword (e.g., 'React', 'Python', 'Risk Management')."
+          },
+          "evidence": {
+            "type": "string",
+            "description": "The *exact quote* from the resume that proves this match (e.g., 'Managed a team of 5 engineers' or 'Developed a new CI/CD pipeline')."
+          },
+          "quality": {
+            "type": "string",
+            "enum": ["Strong", "Good", "Weak"],
+            "description": "The quality of the match based on recency and context."
+          },
+          "reason": {
+            "type": "string",
+            "description": "A 1-2 sentence recruiter-style analysis explaining *why* this is a match and *how strong* it is, citing recency or quantifiable impact (e.g., 'Job requires React; resume shows 3 recent projects using it. This is a Strong match.')."
+          }
+        },
+        "required": ["match", "evidence", "quality", "reason"]
+      }
+    },
+    "skills": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "A general list of all key skills extracted from the resume."
+    }
   },
   "additionalProperties": true
 }

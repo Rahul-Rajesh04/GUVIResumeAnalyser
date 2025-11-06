@@ -8,10 +8,29 @@ const ajv = new Ajv({ allErrors: true, verbose: true, strict: false });
 addFormats(ajv);
 const validate = ajv.compile(schema);
 
-const SYSTEM = `You are a strict JSON generator.
-Output ONLY valid JSON that matches the JSON Schema EXACTLY at the TOP LEVEL.
-Do NOT wrap inside any parent key (e.g., { "ResumeExtraction": { ... } } or { "data": { ... } }).
-No markdown, no comments, no prose. If unsure, use empty strings or empty arrays.`;
+// ... (keep all the 'require' statements at the top)
+
+// ... (keep all the 'require' statements at the top)
+
+// REPLACE the old SYSTEM constant with this new one:
+const SYSTEM = `You are an expert technical recruiter with 20 years of experience.
+Your task is to analyze the RESUME and compare it *vigilantly* against the provided JOB description.
+Output ONLY valid JSON that matches the JSON Schema EXACTLY.
+
+CRITICAL INSTRUCTIONS:
+1.  **Be a Tough Grader:** Do not list everything. Only populate 'strongMatches' with the top 7-10 most significant overlaps between the RESUME and the JOB.
+2.  **Find Evidence:** For each match, you *must* quote the 'evidence' directly from the resume.
+3.  **Evaluate Quality:** For each match, rate its 'quality' as 'Strong', 'Good', or 'Weak'.
+    * **'Strong'**: Recent (last 2 years) AND has high impact (quantifiable results) or is a direct job title match.
+    * **'Good'**: Recent, but lacks quantifiable impact.
+    * **'Weak'**: Mentioned, but is old (3+ years ago) or seems like a minor part of a project.
+4.  **Write the 'reason':** This is the most important part. Write a 1-2 sentence analysis *for a hiring manager* explaining the match's quality.
+    * *Example*: "Job requires 'Risk Management'. Resume lists this under their most recent role. This is a Strong match."
+    * *Example*: "Job requires 'React'. Resume mentions a project from 2019. This is a Weak match due to recency."
+5.  **Be Strict:** If no strong matches are found, return an empty array for 'strongMatches'.
+6.  **Fill 'skills'**: The top-level 'skills' array should still contain a general list of all skills extracted from the resume.`;
+
+// ... (the rest of the file stays exactly the same)
 
 // helpers
 function stripCodeFences(s) {
@@ -54,21 +73,24 @@ async function analyze(req, res) {
     if (busy) return res.status(429).json({ ok: false, error: "Analyzer busy, retry shortly." });
     busy = true;
 
-    const { resumeText, jobText = "" } = req.body || {};
+    const { resumeText, jobTitle = "", jobText = "" } = req.body || {};
     if (!resumeText || typeof resumeText !== "string") {
       return res.status(400).json({ ok: false, error: "resumeText is required" });
     }
 
     const hints = deterministicHints(resumeText);
 
-    const userPrompt = `
+const userPrompt = `
 SYSTEM:
 ${SYSTEM}
 
 RESUME (raw text):
 ${trimResume(resumeText)}
 
-JOB (optional):
+JOB TITLE (optional):
+${jobTitle}
+
+JOB DESCRIPTION (optional):
 ${jobText}
 
 SCHEMA:

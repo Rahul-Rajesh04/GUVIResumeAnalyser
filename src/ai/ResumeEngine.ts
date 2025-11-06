@@ -18,6 +18,15 @@ export interface ResumeAnalysis {
   message?: string;
 }
 
+// --- NEW HELPER INTERFACE ---
+// This defines the new, detailed match object we expect from the AI
+interface DetailedMatch {
+  match: string;
+  evidence: string;
+  quality: "Strong" | "Good" | "Weak";
+  reason: string;
+}
+
 /* ------------------------------------------------------------------ */
 /* 2. Main function: now calls your local Express backend             */
 /* ------------------------------------------------------------------ */
@@ -48,8 +57,11 @@ export async function analyzeResume(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         resumeText,
+        jobTitle: goalJob || "",
         jobText: goalJobDescription || "",
       }),
+
+// ...
     });
 
     if (!response.ok) {
@@ -69,24 +81,47 @@ export async function analyzeResume(
     }
 
     /* -------------------------------------------------------------- */
-    /* 3. Map backend JSON → UI-friendly structure                    */
+    /* 3. Map backend JSON → UI-friendly structure (NEW LOGIC)        */
     /* -------------------------------------------------------------- */
-    const result = await response.json(); // { ok, data, evidence?, validationErrors? }
+    const result = await response.json(); // { ok, data, ... }
     const data = result?.data || {};
     const validationErrors = result?.validationErrors || [];
 
-    const skills = Array.isArray(data.skills) ? data.skills : [];
-    const strengths = skills.slice(0, 5);
+    // --- NEW DETAILED STRENGTHS LOGIC ---
+    let strengths: string[] = [];
+    const detailedMatches: DetailedMatch[] = data.strongMatches || [];
+    let strongMatchCount = 0;
+    
+    if (detailedMatches.length > 0) {
+      // We have real, detailed matches from the AI!
+      strengths = detailedMatches.map(
+        (match: DetailedMatch) => {
+          if (match.quality === "Strong") strongMatchCount++;
+          // Format the detailed analysis for the UI:
+          // [Quality] Match: Reason
+          return `[${match.quality}] ${match.match}: ${match.reason}`;
+        }
+      );
+    } else if (!goalJobDescription || goalJobDescription.trim().length === 0) {
+      // No job description was provided, so just list resume skills
+      strengths = (data.skills || []).slice(0, 5).map(skill => `[Good] ${skill} (from resume)`);
+    } else {
+      // A job was provided, but no matches were found
+      strengths = ["No strong matches found between your resume and this job."];
+    }
+    // --- END NEW LOGIC ---
+
     const improvementAreas = validationErrors.length
       ? ["Some required fields are missing (e.g., contact.email)."]
       : [];
 
-    const tailoringScore = Math.min(100, strengths.length * 20);
+    // Base the score only on 'Strong' quality matches
+    const tailoringScore = Math.min(100, strongMatchCount * 25); // 25 points per "Strong" match
 
     return {
       tailoringScore,
-      alignmentAnalysis: `Found ${strengths.length} key skills in the resume.`,
-      strengths,
+      alignmentAnalysis: `Found ${strongMatchCount} 'Strong' quality matches.`,
+      strengths, // This is now our new, detailed list!
       improvementAreas,
       actionableSuggestions: [
         { category: "skills", priority: "medium", items: improvementAreas },
