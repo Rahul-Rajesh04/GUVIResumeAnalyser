@@ -1,3 +1,4 @@
+// server/routes/analyze.js
 const Ajv = require("ajv");
 const addFormats = require("ajv-formats");
 const { generateJson } = require("../llm");
@@ -45,7 +46,7 @@ function trimResume(text) {
   return t.length > MAX ? t.slice(0, MAX) : t;
 }
 
-// single-flight lock (optional)
+// single-flight lock to avoid concurrent heavy calls (optional)
 let busy = false;
 
 async function analyze(req, res) {
@@ -79,50 +80,29 @@ ${JSON.stringify(hints)}
 Return ONLY the JSON, nothing else.
 `.trim();
 
-    const order = (process.env.PROVIDERS || "openrouter").split(",").map(s => s.trim());
-    let out = await generateJson(userPrompt, order, schema);
+    // generate via LLM(s)
+    let out = await generateJson(userPrompt, null, schema);
 
-    // one repair attempt if needed
+    // attempt auto-repair once if invalid
     for (let i = 0; i < 1; i++) {
       try {
-        let obj = parseCandidateJson(out);
+        const obj = parseCandidateJson(out);
         const ok = validate(obj);
-        if (ok) return res.json({ ok: true, data: obj, providerOrderTried: order });
-
+        if (ok) return res.json({ ok: true, data: obj, providerOrderTried: (process.env.OPENROUTER_MODELS||"").split(",") });
         const errText = ajv.errorsText(validate.errors, { separator: "\n" });
-        const repair = `${userPrompt}
-
-Top-level MUST be the schema object with keys: name, contact, education, experience, skills.
-Do NOT wrap inside "ResumeExtraction" or "data".
-No markdown fences. Only a single JSON object.
-
-VALIDATION ERROR:
-${errText}
-
-Fix and return ONLY valid JSON.`;
-        out = await generateJson(repair, order, schema);
+        const repairPrompt = `${userPrompt}\n\nVALIDATION ERROR:\n${errText}\nFix and return ONLY valid JSON.`;
+        out = await generateJson(repairPrompt, null, schema);
       } catch (e) {
-        const repair = `${userPrompt}
-
-Top-level MUST be the schema object with keys: name, contact, education, experience, skills.
-Do NOT wrap inside "ResumeExtraction" or "data".
-No markdown fences. Only a single JSON object.
-
-PARSING ERROR: ${e.message}
-Return ONLY valid JSON.`;
-        out = await generateJson(repair, order, schema);
+        const repairPrompt = `${userPrompt}\n\nPARSING ERROR: ${e.message}\nReturn ONLY valid JSON.`;
+        out = await generateJson(repairPrompt, null, schema);
       }
     }
 
     try {
       let obj = parseCandidateJson(out);
+      obj = normalizeTopLevel(obj);
       const ok = validate(obj);
-      return res.json({
-        ok,
-        data: obj,
-        validationErrors: validate.errors || null,
-        providerOrderTried: order
-      });
+      return res.json({ ok, data: obj, validationErrors: validate.errors || null, providerOrderTried: (process.env.OPENROUTER_MODELS||"").split(",") });
     } catch (e) {
       return res.status(502).json({ ok: false, error: "Failed to produce valid JSON", detail: e.message });
     }
