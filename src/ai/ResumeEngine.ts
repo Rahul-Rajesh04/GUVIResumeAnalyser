@@ -154,9 +154,7 @@ export async function analyzeResume(
     const improvementAreas: ImprovementArea[] = data.improvementAreas || [];
     const actionableSuggestions: ActionableSuggestion[] = data.actionableSuggestions || [];
 
-    // Base the score only on 'Strong' quality matches
-    const tailoringScore = Math.min(100, strongMatchCount * 25); // 25 points per "Strong" match
-
+    const tailoringScore = data.tailoringScore || 0;
     return {
       tailoringScore,
       alignmentAnalysis: `Found ${strongMatchCount} 'Strong' quality matches.`,
