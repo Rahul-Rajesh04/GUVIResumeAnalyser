@@ -121,6 +121,20 @@
         },
         "required": ["priority", "heading", "items"]
       }
+    },
+    "isResume": {
+      "type": "boolean",
+      "description": "TRUE if the raw text appears to be a structured resume. FALSE otherwise."
+    },
+    "isResumeAlert": {
+      "type": "string",
+      "description": "A mandatory error message if isResume is FALSE. Empty string if TRUE."
+    },
+    "tailoringScore": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "The final, non-integer score (0.0-100.0) based on a complex weighting of all factors."
     }
   },
   "additionalProperties": true,
@@ -128,6 +142,9 @@
     "skills",
     "strongMatches",
     "improvementAreas",
-    "actionableSuggestions"
+    "actionableSuggestions",
+    "isResume",
+    "isResumeAlert",
+    "tailoringScore"
   ]
 }
