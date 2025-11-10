@@ -121,7 +121,7 @@ export function ResumeAnalyzerPage() {
 
   const handleAnalyze = async () => {
     // Ensure all required fields and user data are present
-    if (!state.resumeText || !currentUser || !goalJob || !goalJobDescription) return;
+    if (!state.resumeText || !currentUser) return;
     
     // Extract the user's name from the AppContext for backend validation
     const userName = currentUser.personalDetails.fullName; // <-- NEW LINE

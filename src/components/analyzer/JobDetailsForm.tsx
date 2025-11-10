@@ -28,7 +28,7 @@ export function JobDetailsForm({
     <Card className="p-6 bg-muted/50">
       <div className="space-y-4">
         <div>
-          <Label htmlFor="goalJob" className="font-semibold">Target Job Title</Label>
+          <Label htmlFor="goalJob" className="font-semibold">Target Job Title (Optional) </Label>
           <Input
             id="goalJob"
             placeholder="e.g., Senior Frontend Developer"
@@ -38,7 +38,7 @@ export function JobDetailsForm({
           />
         </div>
         <div>
-          <Label htmlFor="jobDescription" className="font-semibold">Target Job Description</Label>
+          <Label htmlFor="jobDescription" className="font-semibold">Target Job Description (Optional)</Label>
           <Textarea
             id="jobDescription"
             placeholder="Paste the job description here..."
@@ -51,7 +51,7 @@ export function JobDetailsForm({
         <div className="text-center pt-2">
           <Button
             onClick={handleAnalyze}
-            disabled={isAnalyzing || !goalJob || !goalJobDescription || isProcessingFile}
+            disabled={isAnalyzing || isProcessingFile}
           >
             {isAnalyzing ? 'Analyzing...' : 'Analyze Resume Alignment'}
           </Button>
